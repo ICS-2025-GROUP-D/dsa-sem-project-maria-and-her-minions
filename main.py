@@ -6,7 +6,7 @@ from typing import Optional, Any
 
 from linkedlist import LinkedList          
 from review_history import ReviewHistory   
-from category_manager import CategoryManager  
+from CategoryManager import CategoryManager  
 
 
 class FlashcardDB:
