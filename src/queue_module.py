@@ -25,7 +25,6 @@ class FlashcardQueue:
             self.rear = node
 
         self.size += 1
-        print(f"Enqueued: {node.question}")
 
     def dequeue_card(self):
         """Removes and returns the front node (the next flashcard)."""
@@ -44,8 +43,6 @@ class FlashcardQueue:
         dequeued_node.next = None  # Cleanup
         dequeued_node.prev = None
         self.size -= 1
-
-        print(f"Dequeued: {dequeued_node.question}")
         return dequeued_node
 
     def peek_card(self):
