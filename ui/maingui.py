@@ -175,7 +175,7 @@ class FlashCardApp:
         
         ttk.Label(search_frame, text="Search:").pack(side='left')
         self.search_var = tk.StringVar()
-        self.search_var.trace('w', self.filter_cards)
+        # self.search_var.trace('w', self.filter_cards)
         search_entry = ttk.Entry(search_frame, textvariable=self.search_var, width=20)
         search_entry.pack(side='left', padx=5)
         
@@ -433,40 +433,48 @@ class FlashCardApp:
             messagebox.showerror("Error", "Please select a card to update!")
             return
 
-        item = self.tree.item(selection[0])
-        values = item['values']
+        item_id = selection[0]
+        item = self.tree.item(item_id)
+        values = item["values"]
+        # Get the original front and back to find the node
+        original_front = values[0]
+        original_back = values[1]
 
-        front = self.front_entry.get("1.0", tk.END).strip()
-        back = self.back_entry.get("1.0", tk.END).strip()
-        category = self.category_var.get().strip()
+        new_front = self.front_entry.get("1.0", tk.END).strip()
+        new_back = self.back_entry.get("1.0", tk.END).strip()
+        new_category = self.category_var.get().strip()
 
-        if not front or not back:
+        if not new_front or not new_back:
             messagebox.showerror("Error", "Both front and back are required!")
             return
 
-        if not category:
-            category = "General"
-            
-        messagebox.showinfo("Success", "Flash card has been updated")
-        self.refresh_queue()    
-
-        # Find and update the card in self.cards by matching old values
-        updated = False
+        # Match card using front and back (fallback since ID isn’t stored in TreeView yet)
+        matched_node = None
         for card in self.cards:
-            if card.front == values[0] and card.back == values[1] and card.category == values[2]:
-                card.front = front
-                card.back = back
-                card.category = category
-                updated = True
+            if hasattr(card, "front") and hasattr(card, "back") and card.front == original_front and card.back == original_back:
+                matched_node = card
                 break
 
-        if updated:
-            self.refresh_history()
+        if matched_node:
+            matched_node.front = new_front
+            matched_node.back = new_back
+            matched_node.category = new_category or "General"
+
+            # Sync update to MongoDB
+            try:
+                if hasattr(self.manager, "edit_card_in_db"):
+                    # If you have a unique identifier for the card, use it here. Otherwise, update by front/back/category.
+                    self.manager.edit_card_in_db(new_front, new_back, new_category)
+            except Exception as e:
+                print(f"Mongo update failed: {e}")
+
             self.refresh_history()
             self.update_category_dropdown()
+            self.refresh_queue()
             messagebox.showinfo("Success", "Card updated successfully!")
         else:
-            messagebox.showerror("Error", "Failed to update card!")     
+            messagebox.showerror("Error", "Failed to locate the selected card in memory.")
+     
         
     def create_history_tab(self, parent):
         columns = ("Front", "Back", "Category", "Difficulty")
