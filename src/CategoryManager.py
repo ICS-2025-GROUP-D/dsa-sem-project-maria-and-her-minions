@@ -28,4 +28,4 @@ class CategoryManager:
         return list(self.categories.keys())
 
 
-
+  
